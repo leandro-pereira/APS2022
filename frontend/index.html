@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    body {
+        background-color: lightgray;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .content {
+        width: 100px;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 8px;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.3.2/dist/echarts.min.js"
+    integrity="sha256-7rldQObjnoCubPizkatB4UZ0sCQzu2ePgyGSUcVN70E=" crossorigin="anonymous"></script>
+
+<body>
+    <form id="form" action="#">
+        <h1>Consulte a previsão de suas ações</h1>
+        <div class="content">
+            <span>Data inicio</span>
+            <input id="start-date" min="2020-01-01" max="2022-05-02" value="2020-01-01" type="date" required>
+        </div>
+        <div class="content">
+            <span>Data fim</span>
+            <input id="end-date" min="2020-01-01" max="2022-05-02" value="2022-05-02" type="date" required>
+        </div>
+        <div class="content">
+            <span>Escolha a ação</span>
+
+            <Select id="company">
+                <option value="itau">Itau</option>
+                <option value="bradesco">Bradesco</option>
+                <option value="nubank">Nubank</option>
+            </Select required>
+        </div>
+        <button type="submit">Consultar</button>
+    </form>
+
+    <div id="main" style="width: 600px;height:400px;"></div>
+
+    <script>
+        let inputStartDate = document.getElementById('start-date');
+        let inputendDate = document.getElementById('end-date');
+        let inputselect = document.getElementById('company');
+        let form = document.getElementById('form');
+        let myChart = echarts.init(document.getElementById('main'));
+        let chartsData = [["value", "type", "date"],]
+
+        inputStartDate.addEventListener('change', event => {
+            console.log(event.srcElement.valueAsDate);
+            console.log(event.srcElement.valueAsDate.getUTCDate(), 'getUTCDate()');
+            console.log(event.srcElement.valueAsDate.getTimezoneOffset(), 'getTimezoneOffset()');
+            console.log(event.srcElement.valueAsDate.toLocaleDateString(), 'toLocaleDateString()');
+            console.log(event.srcElement.valueAsDate.toLocaleTimeString(), 'toLocaleTimeString()');
+            console.log(event.srcElement.valueAsDate.toUTCString(), 'toUTCString()');
+            console.log(event.srcElement.valueAsDate.toTimeString(), 'toTimeString()');
+            console.log(event.srcElement.valueAsDate.toString(), 'toString()');
+            //getUTCDate()
+            //getTimezoneOffset()
+            //toLocaleDateString()
+            //toLocaleTimeString()
+            //toUTCString()
+            //toTimeString()
+            //toString()
+        })
+        inputendDate.addEventListener('change', event => {
+
+        })
+
+        form.addEventListener('submit', async (event) => {
+            
+            console.log(inputStartDate.value, inputendDate.value,inputselect.value);
+            let request = await fetch(
+                "http://127.0.0.1:5000/forecast?"+ new URLSearchParams({
+                startDate: inputStartDate.value,
+                endDate: inputendDate.value,
+                company: inputselect.value
+                }),
+                {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    
+                }
+            );
+            request = await request.json();
+            chartsData = [["value", "type", "date"],].concat(request);
+            option.dataset[0].source = chartsData;
+            myChart.setOption(option);
+            return false;
+        });
+
+        // documentation echarts
+        // https://echarts.apache.org/en/option.html#title
+        // examples of charts
+        // https://echarts.apache.org/examples/en/index.html
+
+        option = {
+            dataset: [
+                {
+                    id: 'dataset_raw',
+                    source: chartsData
+                },
+                {
+                    id: 'dataset_since_1950_of_germany',
+                    fromDatasetId: 'dataset_raw',
+                    transform: {
+                        type: 'filter',
+                        config: {
+                            and: [
+                                { dimension: 'type', '=': 'real' }
+                            ]
+                        }
+                    }
+                },
+                {
+                    id: 'dataset_since_1950_of_france',
+                    fromDatasetId: 'dataset_raw',
+                    transform: {
+                        type: 'filter',
+                        config: {
+                            and: [
+                                { dimension: 'type', '=': 'forecast' }
+                            ]
+                        }
+                    }
+                }
+            ],
+            title: {
+                text: 'teste'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            xAxis: {
+                type: 'category',
+                nameLocation: 'middle'
+            },
+            yAxis: {
+                name: 'Income'
+            },
+            series: [
+                {
+                    type: 'line',
+                    datasetId: 'dataset_since_1950_of_germany',
+                    showSymbol: false,
+                    encode: {
+                        x: 'date',
+                        y: 'value',
+                        itemName: 'date',
+                        tooltip: ['value']
+                    }
+                },
+                {
+                    type: 'line',
+                    datasetId: 'dataset_since_1950_of_france',
+                    showSymbol: false,
+                    encode: {
+                        x: 'date',
+                        y: 'value',
+                        itemName: 'date',
+                        tooltip: ['value']
+                    }
+                }
+            ]
+        };
+
+        // Display the chart using the configuration items and data just specified.
+        myChart.setOption(option);
+    </script>
+
+</body>
+
+</html>
